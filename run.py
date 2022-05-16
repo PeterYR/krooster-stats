@@ -105,7 +105,7 @@ def write_to_csv(results, filename):
         writer = csv.DictWriter(fp, fieldnames=columns)
         writer.writeheader()
         writer.writerows(results)
-    print(f'Saved results to outout/{filename}.csv')
+    print(f'Saved results to output/{filename}.csv')
 
 
 output_file_list = os.listdir('output')
