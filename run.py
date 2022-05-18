@@ -112,11 +112,10 @@ output_file_list = os.listdir('output')
 
 if 'output.csv' not in output_file_list:
     write_to_csv(results, 'output')
-    exit()
-
-x = 1
-while True:
-    if f'output{x}.csv' not in output_file_list:
-        write_to_csv(results, f'output{x}')
-        break
-    x += 1
+else:
+    x = 1
+    while True:
+        if f'output{x}.csv' not in output_file_list:
+            write_to_csv(results, f'output{x}')
+            break
+        x += 1
