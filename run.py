@@ -1,15 +1,20 @@
 import sys
-
-if len(sys.argv) != 2:
-    print('Usage: python run.py <directory>')
-    exit()
-
 import csv
 import json
 import os
 import requests
 
+
 OPERATORS_JSON_URL = 'https://raw.githubusercontent.com/neeia/ak-roster/main/src/data/operators.json'
+COUNTED_FIELDS = [
+    'owned',
+    'E1',
+    'E2',
+    'max-lvl',
+    'S1M3',
+    'S2M3',
+    'S3M3'
+]
 MAX_ELITES_AND_LEVELS = {
     1: (0, 30),
     2: (0, 30),
@@ -20,25 +25,24 @@ MAX_ELITES_AND_LEVELS = {
 }
 
 
-def parse_data(op_data) -> dict:
+def get_roster(username: str) -> dict:
+    '''Make HTTP requests and return Krooster roster JSON'''
+
+    uuid = requests.get(f'https://ak-roster-default-rtdb.firebaseio.com/phonebook/{username.lower()}.json').json()
+    if not uuid:
+        raise ValueError(f'Invalid username: {username}')
+    return requests.get(f'https://ak-roster-default-rtdb.firebaseio.com/users/{uuid}/roster.json').json()
+
+
+def parse_data(op_data: dict) -> dict:
     '''Returns dict with bools for stats of interest'''
-    global common_op_info
-    global MAX_ELITES_AND_LEVELS
-    output = {
-        'owned': False,
-        'E1': False,
-        'E2': False,
-        'max-lvl': False,
-        'S1M3': False,
-        'S2M3': False,
-        'S3M3': False
-    }
+    output = {key: False for key in COUNTED_FIELDS}
 
     if not op_data['owned']:
         return output
     output['owned'] = True
 
-    # set max-lvl bool
+    # set max-lvl bool if operator is at max elite and level
     if (op_data.get('promotion'), op_data.get('level')) == MAX_ELITES_AND_LEVELS[op_data['rarity']]:
         output['max-lvl'] = True
 
@@ -48,7 +52,7 @@ def parse_data(op_data) -> dict:
         if op_data.get('promotion') >= 2:
             output['E2'] = True
 
-    # set S1M3 and S2M3 bools
+    # set M3 bools
     for skill_num in range(1, 4):
         if op_data.get(f'skill{skill_num}Mastery') == 3:
             output[f'S{skill_num}M3'] = True
@@ -56,51 +60,9 @@ def parse_data(op_data) -> dict:
     return output
 
 
-# load Krooster JSONs
-data = {}
-for filename in os.listdir(sys.argv[1]):
-    with open(os.path.join(sys.argv[1], filename), 'r', encoding='utf8') as fp:
-        data[filename] = json.load(fp)
-n = len(data)
-print(f'Loaded {n} Krooster JSONs')
-
-# get common info of ops
-operator_json = requests.get(OPERATORS_JSON_URL).json()
-print(f'Loaded operators.json from {OPERATORS_JSON_URL}')
-common_op_info = {}
-for op_id, op_data in operator_json.items():
-    common_op_info[op_id] = {
-        'name': op_data['name'], 'rarity': op_data['rarity']}
-
-# iterate through operators and do stuff
-results = []
-for op_id, op_data in common_op_info.items():
-    # name = op_data['name']
-    totals = {
-        'operator_id' : op_id,
-        'operator_name' : op_data['name'],
-        'owned': 0,
-        'E1': 0,
-        'E2': 0,
-        'max-lvl': 0,
-        'S1M3': 0,
-        'S2M3': 0,
-        'S3M3': 0
-    }
-    
-    # iterate through JSON Krooster data
-    for op_data in [x[op_id] for x in data.values()]:
-        # print(name, op_id, parse_data(op_data))
-        for key, val in parse_data(op_data).items():
-            if val:
-                totals[key] += 1
-
-    results.append(totals)
-
-# save CSV file
-def write_to_csv(results, filename):
+def write_to_csv(results: list[dict[str, str]], filename: str):
     '''Write results to given file'''
-    columns = ['operator_name', 'owned', 'E1', 'E2', 'max-lvl', 'S1M3', 'S2M3', 'S3M3', 'operator_id']
+    columns = ['operator_name'] + COUNTED_FIELDS + ['operator_id']
     with open(f'output/{filename}.csv', 'w', newline='') as fp:
         writer = csv.DictWriter(fp, fieldnames=columns)
         writer.writeheader()
@@ -108,14 +70,60 @@ def write_to_csv(results, filename):
     print(f'Saved results to output/{filename}.csv')
 
 
-output_file_list = os.listdir('output')
+def main():
+    if len(sys.argv) != 2:
+        print('Usage: python run.py <username list file path>')
+        sys.exit()
 
-if 'output.csv' not in output_file_list:
-    write_to_csv(results, 'output')
-else:
-    x = 1
-    while True:
-        if f'output{x}.csv' not in output_file_list:
-            write_to_csv(results, f'output{x}')
-            break
-        x += 1
+
+    # get common info of ops (operators.json)
+    operators_json: dict = requests.get(OPERATORS_JSON_URL).json()
+    print(f'Loaded operators.json from {OPERATORS_JSON_URL}')
+
+
+    common_op_info = {}
+    for op_id, op_data in operators_json.items():
+        common_op_info[op_id] = {
+            'name': op_data['name'],
+            'rarity': op_data['rarity']
+        }
+
+
+    counts = {} # operator ID to dict with counts
+    for key in common_op_info.keys():
+        counts[key] = {key: 0 for key in COUNTED_FIELDS}
+
+
+    # iterate through Krooster usernames and count
+    with open(sys.argv[1]) as fp:
+        for txt_line in fp:
+            username = txt_line.strip(' \t\n\r')
+            roster_json = get_roster(username)
+
+            for op_id, op_data in roster_json.items():
+                # parse roster JSON for operator and increment counts dict
+                parsed_bools = parse_data(op_data)
+                for key, val in parsed_bools.items():
+                    if val:
+                        counts[op_id][key] += 1
+
+
+if __name__ == '__main__':
+    main()
+
+
+
+
+# # save to output
+
+# output_file_list = os.listdir('output')
+
+# if 'output.csv' not in output_file_list:
+#     write_to_csv(results, 'output')
+# else:
+#     x = 1
+#     while True:
+#         if f'output{x}.csv' not in output_file_list:
+#             write_to_csv(results, f'output{x}')
+#             break
+#         x += 1
