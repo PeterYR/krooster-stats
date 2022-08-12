@@ -63,11 +63,11 @@ def parse_data(op_data: dict) -> dict:
 def write_to_csv(results: list[dict[str, str]], filename: str):
     '''Write results to given file'''
     columns = ['operator_name'] + COUNTED_FIELDS + ['operator_id']
-    with open(f'output/{filename}.csv', 'w', newline='') as fp:
+    with open(f'{filename}', 'w', newline='') as fp:
         writer = csv.DictWriter(fp, fieldnames=columns)
         writer.writeheader()
         writer.writerows(results)
-    print(f'Saved results to output/{filename}.csv')
+    print(f'Saved results to {filename}')
 
 
 def main():
@@ -98,7 +98,11 @@ def main():
     with open(sys.argv[1]) as fp:
         for txt_line in fp:
             username = txt_line.strip(' \t\n\r')
+            if not username:
+                continue
+
             roster_json = get_roster(username)
+            print(f'Fetched roster for {username}')
 
             for op_id, op_data in roster_json.items():
                 # parse roster JSON for operator and increment counts dict
@@ -107,6 +111,18 @@ def main():
                     if val:
                         counts[op_id][key] += 1
 
+    # print(counts)
+    # write_to_csv(counts, 'out_tmp')
+
+    # convert counts to CSV columns
+    output = []
+    for op_id, counts_dict in counts.items():
+        csv_row = counts_dict
+        csv_row['operator_id'] = op_id
+        csv_row['operator_name'] = operators_json.get(op_id).get('name')
+        output.append(csv_row)
+
+    write_to_csv(output, 'output.csv')
 
 if __name__ == '__main__':
     main()
