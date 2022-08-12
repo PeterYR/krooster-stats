@@ -67,7 +67,6 @@ def write_to_csv(results: list[dict[str, str]], filename: str):
         writer = csv.DictWriter(fp, fieldnames=columns)
         writer.writeheader()
         writer.writerows(results)
-    print(f'Saved results to {filename}')
 
 
 def main():
@@ -95,6 +94,7 @@ def main():
 
 
     # iterate through Krooster usernames and count
+    users_ct = 0
     with open(sys.argv[1]) as fp:
         for txt_line in fp:
             username = txt_line.strip(' \t\n\r')
@@ -110,9 +110,8 @@ def main():
                 for key, val in parsed_bools.items():
                     if val:
                         counts[op_id][key] += 1
+            users_ct += 1
 
-    # print(counts)
-    # write_to_csv(counts, 'out_tmp')
 
     # convert counts to CSV columns
     output = []
@@ -123,23 +122,8 @@ def main():
         output.append(csv_row)
 
     write_to_csv(output, 'output.csv')
+    print(f'Saved results for {users_ct} users to output.csv')
+
 
 if __name__ == '__main__':
     main()
-
-
-
-
-# # save to output
-
-# output_file_list = os.listdir('output')
-
-# if 'output.csv' not in output_file_list:
-#     write_to_csv(results, 'output')
-# else:
-#     x = 1
-#     while True:
-#         if f'output{x}.csv' not in output_file_list:
-#             write_to_csv(results, f'output{x}')
-#             break
-#         x += 1
