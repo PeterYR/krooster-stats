@@ -1,19 +1,12 @@
 # krooster-stats
 
-## Getting Krooster data
+## Instructions
 
-Navigate to [Krooster.com](https://www.krooster.com/) and copy the local storage value corresponding to `"operators"` into a JSON file.
-
-**Optional (but recommended):** get a lot of friends to do the same. Save all `.json` files in the same directory.
-
-On Chromium browsers: open DevTools (F12) and navigate to `Application > Local Storage > https://www.krooster.com`.
-
-## Running the script
-
-Run the script while specifying a directory containing JSON files. For example:
+- Place Krooster usernames in a `.txt` file. An example is provided in `usernames_sample.txt`.
+- Run the script while specifying the path to the usernames file. For example:
 
 ```
-python run.py sample_data
+python run.py usernames_sample.txt
 ```
 
-Results will be saved in the `output/` directory.
+Results will be saved in `output.csv`.
