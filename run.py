@@ -72,10 +72,18 @@ def write_to_csv(results: list[dict[str, str]], filename: str):
 
 
 def main():
-    if len(sys.argv) != 2:
-        print('Usage: python run.py <username list file path>')
+    if len(sys.argv) < 2:
+        print('Usage: python run.py <username list path> [rarity]')
         sys.exit()
+    
 
+    rarity = 0
+    if len(sys.argv) >= 3:  # rarity specified
+        rarity = int(sys.argv[2])
+        if not 1 <= rarity <= 6:
+            print('Rarity must be between 1 and 6')
+            sys.exit()
+    
 
     # get common info of ops (operators.json)
     operators_json: dict = requests.get(OPERATORS_JSON_URL).json()
@@ -90,8 +98,11 @@ def main():
         }
 
 
-    counts = {} # operator ID to dict with counts
-    for key in common_op_info.keys():
+    counts = {}  # operator ID to dict with counts
+    for key, val in common_op_info.items():
+        if rarity and val['rarity'] != rarity:
+            # skip if rarity specified but doesn't match
+            continue
         counts[key] = {key: 0 for key in COUNTED_FIELDS}
 
 
@@ -107,6 +118,10 @@ def main():
             print(f'Fetched roster for {username}')
 
             for op_id, op_data in roster_json.items():
+                if rarity and op_data['rarity'] != rarity:
+                    # skip if rarity specified but doesn't match
+                    continue
+
                 # parse roster JSON for operator and increment counts dict
                 parsed_bools = parse_data(op_data)
                 for key, val in parsed_bools.items():
