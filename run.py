@@ -115,6 +115,9 @@ def main():
                 continue
 
             roster_json = get_roster(username)
+            if not roster_json:  # roster empty or smth
+                print(f'Roster for {username} is empty')
+                continue
             print(f'Fetched roster for {username}')
 
             for op_id, op_data in roster_json.items():
