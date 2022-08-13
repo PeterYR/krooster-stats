@@ -1,11 +1,10 @@
 import sys
 import csv
-import json
-import os
 import requests
 
 
 OPERATORS_JSON_URL = 'https://raw.githubusercontent.com/neeia/ak-roster/main/src/data/operators.json'
+
 COUNTED_FIELDS = [
     'owned',
     'E1',
@@ -15,6 +14,7 @@ COUNTED_FIELDS = [
     'S2M3',
     'S3M3'
 ]
+
 MAX_ELITES_AND_LEVELS = {
     1: (0, 30),
     2: (0, 30),
@@ -36,6 +36,7 @@ def get_roster(username: str) -> dict:
 
 def parse_data(op_data: dict) -> dict:
     '''Returns dict with bools for stats of interest'''
+
     output = {key: False for key in COUNTED_FIELDS}
 
     if not op_data['owned']:
@@ -62,6 +63,7 @@ def parse_data(op_data: dict) -> dict:
 
 def write_to_csv(results: list[dict[str, str]], filename: str):
     '''Write results to given file'''
+
     columns = ['operator_name'] + COUNTED_FIELDS + ['operator_id']
     with open(f'{filename}', 'w', newline='') as fp:
         writer = csv.DictWriter(fp, fieldnames=columns)
