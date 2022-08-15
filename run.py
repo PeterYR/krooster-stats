@@ -3,6 +3,8 @@ import csv
 import requests
 
 
+EN_ONLY = True
+
 OPERATORS_JSON_URL = 'https://raw.githubusercontent.com/neeia/ak-roster/main/src/data/operators.json'
 
 COUNTED_FIELDS = [
@@ -94,7 +96,8 @@ def main():
     for op_id, op_data in operators_json.items():
         common_op_info[op_id] = {
             'name': op_data['name'],
-            'rarity': op_data['rarity']
+            'rarity': op_data['rarity'],
+            'isCnOnly': op_data['isCnOnly']
         }
 
 
@@ -102,6 +105,9 @@ def main():
     for key, val in common_op_info.items():
         if rarity and val['rarity'] != rarity:
             # skip if rarity specified but doesn't match
+            continue
+        if EN_ONLY and val['isCnOnly']:
+            # use only EN ops
             continue
         counts[key] = {key: 0 for key in COUNTED_FIELDS}
 
@@ -123,6 +129,9 @@ def main():
             for op_id, op_data in roster_json.items():
                 if rarity and op_data['rarity'] != rarity:
                     # skip if rarity specified but doesn't match
+                    continue
+                if EN_ONLY and operators_json[op_id]['isCnOnly']:
+                    # use only EN ops
                     continue
 
                 # parse roster JSON for operator and increment counts dict
