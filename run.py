@@ -73,15 +73,15 @@ def write_to_csv(results: list[dict[str, str]], filename: str):
         writer.writerows(results)
 
 
-def main():
-    if len(sys.argv) < 2:
+def main(args):
+    if len(args) < 2:
         print('Usage: python run.py <username list path> [rarity]')
         sys.exit()
     
 
     rarity = 0
-    if len(sys.argv) >= 3:  # rarity specified
-        rarity = int(sys.argv[2])
+    if len(args) >= 3:  # rarity specified
+        rarity = int(args[2])
         if not 1 <= rarity <= 6:
             print('Rarity must be between 1 and 6')
             sys.exit()
@@ -114,7 +114,7 @@ def main():
 
     # iterate through Krooster usernames and count
     users_ct = 0
-    with open(sys.argv[1]) as fp:
+    with open(args[1]) as fp:
         for txt_line in fp:
             username = txt_line.strip(' \t\n\r')
             if not username:
@@ -155,4 +155,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    main(sys.argv)
