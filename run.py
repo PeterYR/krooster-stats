@@ -26,10 +26,24 @@ MAX_ELITES_AND_LEVELS = {
     6: (2, 90)
 }
 
+# load general operator data from operators.json
+operators_json: dict[str, dict] = requests.get(OPERATORS_JSON_URL).json()
+common_op_info = {}
+for id, data in operators_json.items():
+    if EN_ONLY and data.get('isCnOnly'):  # skip CN-only ops if flag set
+        continue
+    
+    common_op_info[id] = {
+        'name': data['name'],
+        'rarity': data['rarity'],
+    }
+
 
 def get_roster(username: str) -> dict:
     '''Make HTTP requests and return Krooster roster JSON'''
 
+    if not username:
+        return {}
     uuid = requests.get(f'https://ak-roster-default-rtdb.firebaseio.com/phonebook/{username.lower()}.json').json()
     if not uuid:
         raise ValueError(f'Invalid username: {username}')
@@ -73,6 +87,39 @@ def write_to_csv(results: list[dict[str, str]], filename: str):
         writer.writerows(results)
 
 
+def count(usernames: list[str], accepted_ops: set[str] = None) -> dict[str, dict[str, int]]:
+    '''Counts fields for all users' Kroosters.\n
+    `{ operator_id: { field: count } }`
+    - `usernames`: list of Krooster usernames
+    - `accepted_ops`: set of operator IDs to count'''
+
+    # use all ops if accepted_ops not given
+    if accepted_ops is None:
+        accepted_ops = set(common_op_info.keys())
+
+    output: dict[str, dict[str, int]] = {}
+    for id in common_op_info.keys():  # initialize all fields to 0
+        if id in accepted_ops:
+            output[id] = {field: 0 for field in COUNTED_FIELDS}
+        
+    for username in usernames:
+        roster = get_roster(username)
+        if not roster:
+            print(f'Roster for {username} is empty')
+            continue
+        print(f'Fetched roster for {username}')
+
+        for id, data in roster.items():  # iterate through roster JSON
+            if id not in accepted_ops:
+                continue
+            parsed_bools = parse_data(data)
+            for key, val in parsed_bools.items():
+                if val:
+                    output[id][key] += 1
+        
+    return output
+
+
 def main(args):
     if len(args) < 2:
         print('Usage: python run.py <username list path> [rarity]')
@@ -97,17 +144,14 @@ def main(args):
         common_op_info[op_id] = {
             'name': op_data['name'],
             'rarity': op_data['rarity'],
-            'isCnOnly': op_data['isCnOnly']
+            # 'isCnOnly': op_data['isCnOnly']
         }
 
 
-    counts = {}  # operator ID to dict with counts
+    counts: dict[str, dict[str, int]] = {}  # operator ID to dict with counts
     for key, val in common_op_info.items():
         if rarity and val['rarity'] != rarity:
             # skip if rarity specified but doesn't match
-            continue
-        if EN_ONLY and val['isCnOnly']:
-            # use only EN ops
             continue
         counts[key] = {key: 0 for key in COUNTED_FIELDS}
 
@@ -129,9 +173,6 @@ def main(args):
             for op_id, op_data in roster_json.items():
                 if rarity and op_data['rarity'] != rarity:
                     # skip if rarity specified but doesn't match
-                    continue
-                if EN_ONLY and operators_json[op_id]['isCnOnly']:
-                    # use only EN ops
                     continue
 
                 # parse roster JSON for operator and increment counts dict
