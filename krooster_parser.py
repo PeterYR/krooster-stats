@@ -45,11 +45,13 @@ def get_roster(username: str) -> dict:
 
     if not username:
         return {}
-    uuid = requests.get(
+    r = requests.get(
         f"https://ak-roster-default-rtdb.firebaseio.com/phonebook/{username.lower()}.json"
-    ).json()
-    if not uuid:
+    )
+    if not r:
         raise ValueError(f"Invalid username: {username}")
+
+    uuid = r.json()
     return requests.get(
         f"https://ak-roster-default-rtdb.firebaseio.com/users/{uuid}/roster.json"
     ).json()
