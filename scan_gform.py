@@ -8,6 +8,13 @@ COLUMNS = {
     'How did you hear about this survey?': 'communities'
 }
 
+COMMUNITIES = {
+    'Discord',
+    'Reddit',
+    'YouTube',
+    'Twitter',
+}
+
 
 def get_df(filename: str) -> pd.DataFrame:
     '''Generate Pandas dataframe from Google Forms responses'''
@@ -23,7 +30,7 @@ def get_df(filename: str) -> pd.DataFrame:
 
     # separate rarity and community strings into lists
     df['rarities'] = df['rarities'].str.split(',').apply(lambda l: [int(x.strip(' ★')) for x in l])
-    df['communities'] = df['communities'].str.split(',').apply(lambda l: [x.strip() for x in l])
+    df['communities'] = df['communities'].str.split(',').apply(lambda l: [x.strip() for x in l] if type(l) is list else l)
 
     return df
 
@@ -37,15 +44,15 @@ def generate_user_lists(df: pd.DataFrame) -> dict[str, list[str]]:
     for rarity in range(1, 7):
         df_tmp = df[df['rarities'].apply(lambda l: rarity in l)]
 
-        # scan for all communities present for this rarity
-        communities = set()
-        for comm_list in df_tmp['communities']:
-            for community in comm_list:
-                communities.add(community)
+        # # scan for all communities present for this rarity
+        # communities = set()
+        # for comm_list in df_tmp['communities']:
+        #     for community in comm_list:
+        #         communities.add(community)
         
-        for community in communities:
+        for community in COMMUNITIES:
             # dataframe filtered by rarity and community
-            df_tmp2 = df_tmp[df_tmp['communities'].apply(lambda l: community in l)]
+            df_tmp2 = df_tmp[df_tmp['communities'].apply(lambda l: type(l) is list and community in l)]
 
             # set up file-safe community name
             f_comm_name = ''.join([c for c in community if c.isalnum() or c == ' '])
