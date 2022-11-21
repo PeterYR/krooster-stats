@@ -1,5 +1,7 @@
 usernames.txt
 output.csv
+output/
+gform*.csv
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
