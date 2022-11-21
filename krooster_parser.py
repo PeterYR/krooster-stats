@@ -104,7 +104,11 @@ def count(
             output[id] = {field: 0 for field in COUNTED_FIELDS}
 
     for username in usernames:
-        roster = get_roster(username)
+        try:
+            roster = get_roster(username)
+        except ValueError:
+            continue
+
         if not roster:
             # print(f"Roster for {username} is empty")
             continue
