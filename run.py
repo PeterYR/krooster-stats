@@ -1,7 +1,9 @@
+import csv
+import sys
+from pathlib import Path
+
 import krooster_parser as kp
 import scan_gform as sgf
-import sys
-import csv
 
 # set up mapping of rarities to ops
 op_rarities = {r: set() for r in range(1, 7)}
@@ -41,6 +43,9 @@ def main(argv):
     df = sgf.get_df(argv[1])
     user_lists = sgf.generate_user_lists(df)
 
+    # create output folder if needed
+    Path("./output").mkdir(exist_ok=True)
+
     # rarity/community specific stats
     for subset_name, user_list in user_lists.items():  # for each rarity/community pair
         if not user_list:  # list is empty
@@ -57,8 +62,8 @@ def main(argv):
 
     # find overall stats (all communities) for each rarity
     for rarity in range(1, 7):
-        df_tmp = df[df['rarities'].apply(lambda l: rarity in l)]
-        user_list = list(df_tmp['username'])
+        df_tmp = df[df["rarities"].apply(lambda l: rarity in l)]
+        user_list = list(df_tmp["username"])
 
         valid_ops = op_rarities.get(rarity)
 
