@@ -45,16 +45,25 @@ def get_roster(username: str) -> dict:
 
     if not username:
         return {}
-    r = requests.get(
-        f"https://ak-roster-default-rtdb.firebaseio.com/phonebook/{username.lower()}.json"
-    )
-    if not r:
-        raise ValueError(f"Invalid username: {username}")
+    
+    try:
+        r = requests.get(
+            f"https://ak-roster-default-rtdb.firebaseio.com/phonebook/{username.lower()}.json"
+        )
+        if not r:
+            return {}
 
-    uuid = r.json()
-    return requests.get(
-        f"https://ak-roster-default-rtdb.firebaseio.com/users/{uuid}/roster.json"
-    ).json()
+        uuid = r.json()
+        r2 = requests.get(
+            f"https://ak-roster-default-rtdb.firebaseio.com/users/{uuid}/roster.json"
+        )
+        if not r2:
+            return {}
+
+        return r2.json()
+
+    except Exception:
+        return {}
 
 
 def parse_data(op_data: dict) -> dict:
@@ -104,15 +113,15 @@ def count(
             output[id] = {field: 0 for field in COUNTED_FIELDS}
 
     for username in usernames:
-        try:
-            roster = get_roster(username)
-        except ValueError:
-            continue
+        # try:
+        roster = get_roster(username)
+        # except ValueError:
+        #     print(f"fail on {username}")
+        #     continue
 
         if not roster:
-            # print(f"Roster for {username} is empty")
+            # roster is empty, or `get_roster` failed
             continue
-        # print(f"Fetched roster for {username}")
 
         for id, data in roster.items():  # iterate through roster JSON
             if id not in accepted_ops:
