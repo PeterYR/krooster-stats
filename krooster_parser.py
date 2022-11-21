@@ -102,9 +102,9 @@ def count(
     for username in usernames:
         roster = get_roster(username)
         if not roster:
-            print(f"Roster for {username} is empty")
+            # print(f"Roster for {username} is empty")
             continue
-        print(f"Fetched roster for {username}")
+        # print(f"Fetched roster for {username}")
 
         for id, data in roster.items():  # iterate through roster JSON
             if id not in accepted_ops:
