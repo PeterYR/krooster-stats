@@ -1,4 +1,5 @@
 import requests
+from functools import cache
 
 EN_ONLY = True
 
@@ -38,6 +39,7 @@ for id, data in operators_json.items():
     }
 
 
+@cache
 def get_roster(username: str) -> dict:
     """Make HTTP requests and return Krooster roster JSON"""
 
