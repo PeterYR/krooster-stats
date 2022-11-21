@@ -6,6 +6,10 @@ import csv
 # set up mapping of rarities to ops
 op_rarities = {r: set() for r in range(1, 7)}
 for op_name, data in kp.operators_json.items():
+    if kp.EN_ONLY and data.get("isCnOnly"):
+        # op is CN_only but kparser set to EN only
+        continue
+
     rarity = data.get("rarity")
     op_rarities[rarity].add(op_name)
 
@@ -34,7 +38,8 @@ def main(argv):
         print(f"Usage: python {argv[0]} <Google forms CSV path>")
         sys.exit()
 
-    user_lists = sgf.generate_user_lists(sgf.get_df(argv[1]))
+    df = sgf.get_df(argv[1])
+    user_lists = sgf.generate_user_lists(df)
 
     # rarity/community specific stats
     for subset_name, user_list in user_lists.items():  # for each rarity/community pair
@@ -50,7 +55,18 @@ def main(argv):
         write_to_csv(results, out_path)
         print(f"Wrote to {out_path}")
 
-    # TODO: find overall stats (all communities) for each rarity
+    # find overall stats (all communities) for each rarity
+    for rarity in range(1, 7):
+        df_tmp = df[df['rarities'].apply(lambda l: rarity in l)]
+        user_list = list(df_tmp['username'])
+
+        valid_ops = op_rarities.get(rarity)
+
+        results = kp.count(user_list, accepted_ops=valid_ops)
+
+        out_path = f"output/ALL_{rarity}.csv"
+        write_to_csv(results, out_path)
+        print(f"Wrote to {out_path}")
 
 
 if __name__ == "__main__":
