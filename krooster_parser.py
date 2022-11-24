@@ -94,6 +94,20 @@ def parse_data(op_data: dict) -> dict:
         if mastery.get(skill_num) == 3:
             output[f"S{skill_num}M3"] = True
 
+    # check for impossible masteries/promotions
+    if op_data.get("id") == "char_002_amiya":  # skip check for caster amiya
+        return output
+
+    rarity = op_data.get("rarity")
+    if rarity < 6:  # S3 doesn't exist
+        output["S3M3"] = False
+    if rarity < 4:  # S2 doesn't exist
+        output["S2M3"] = False
+    if rarity < 3:  # E2 doesn't exist
+        output["E2"] = False
+    if rarity < 2:  # E1 doesn't exist
+        output["E1"] = False
+
     return output
 
 
@@ -112,8 +126,8 @@ def force_mastery_schema(mastery) -> dict[int, int]:
 
     elif type(mastery) is dict:
         for i in range(1, 4):
-            if str(i) in mastery:
-                output[i] = mastery.get(str(i), 0)
+            if str(i - 1) in mastery:
+                output[i] = mastery.get(str(i - 1), 0)
 
     else:
         raise ValueError("Unrecognized mastery schema")
@@ -140,8 +154,8 @@ def count(
             output[id] = {field: 0 for field in COUNTED_FIELDS}
 
     if logging:
-        print(f'Parsing {len(usernames)} rosters...')
-    
+        print(f"Parsing {len(usernames)} rosters...")
+
     n = 0
     for username in usernames:
         # try:
@@ -153,12 +167,12 @@ def count(
         if not roster:
             # roster is empty, or `get_roster` failed
             if logging:
-                print(f'  ROSTER REQUEST FAILED for {username[:30]}')
+                print(f"  ROSTER REQUEST FAILED for {username[:30]}")
             continue
-        
+
         n += 1
         if logging:
-            print(f'  Fetched roster for {username[:30]}')
+            print(f"  Fetched roster for {username[:30]}")
 
         for id, data in roster.items():  # iterate through roster JSON
             if id not in accepted_ops:
@@ -169,5 +183,5 @@ def count(
                     output[id][key] += 1
 
     if logging:
-        print(f'Parsed {n} rosters')
+        print(f"Parsed {n} rosters")
     return output
