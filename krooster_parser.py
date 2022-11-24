@@ -45,7 +45,7 @@ def get_roster(username: str) -> dict:
 
     if not username:
         return {}
-    
+
     try:
         r = requests.get(
             f"https://ak-roster-default-rtdb.firebaseio.com/phonebook/{username.lower()}.json"
@@ -88,13 +88,39 @@ def parse_data(op_data: dict) -> dict:
             output["E2"] = True
 
     # set M3 bools
+    mastery = force_mastery_schema(op_data.get("mastery", {}))
     for skill_num in range(1, 4):
-        if op_data.get(f"skill{skill_num}Mastery") == 3:
+        # if op_data.get(f"skill{skill_num}Mastery") == 3:
+        if mastery.get(skill_num) == 3:
             output[f"S{skill_num}M3"] = True
 
     return output
 
 
+def force_mastery_schema(mastery) -> dict[int, int]:
+    """Mastery schema is wack, this func makes it less wack"""
+    output = {}
+    if not mastery:
+        return output
+
+    if type(mastery) is list:
+        for i, m in enumerate(mastery):
+            if m:  # list entry is neither None nor 0
+                output[i + 1] = m
+
+        return output
+
+    elif type(mastery) is dict:
+        for i in range(1, 4):
+            if str(i) in mastery:
+                output[i] = mastery.get(str(i), 0)
+
+    else:
+        raise ValueError("Unrecognized mastery schema")
+    return output
+
+
+# TODO: logging option?
 def count(
     usernames: list[str], accepted_ops: set[str] = None
 ) -> dict[str, dict[str, int]]:
