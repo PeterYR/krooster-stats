@@ -71,7 +71,7 @@ def parse_data(op_data: dict) -> dict:
 
     output = {key: False for key in COUNTED_FIELDS}
 
-    if not op_data["owned"]:
+    if not op_data.get("owned"):
         return output
     output["owned"] = True
 
@@ -122,12 +122,13 @@ def force_mastery_schema(mastery) -> dict[int, int]:
 
 # TODO: logging option?
 def count(
-    usernames: list[str], accepted_ops: set[str] = None
+    usernames: list[str], accepted_ops: set[str] = None, logging=False
 ) -> dict[str, dict[str, int]]:
     """Counts fields for all users' Kroosters.\n
     `{ operator_id: { field: count } }`
     - `usernames`: list of Krooster usernames
-    - `accepted_ops`: set of operator IDs to count"""
+    - `accepted_ops`: set of operator IDs to count
+    - `logging`: print intermediate statuses if enabled"""
 
     # use all ops if accepted_ops not given
     if accepted_ops is None:
@@ -138,6 +139,10 @@ def count(
         if id in accepted_ops:
             output[id] = {field: 0 for field in COUNTED_FIELDS}
 
+    if logging:
+        print(f'Parsing {len(usernames)} rosters...')
+    
+    n = 0
     for username in usernames:
         # try:
         roster = get_roster(username)
@@ -147,7 +152,13 @@ def count(
 
         if not roster:
             # roster is empty, or `get_roster` failed
+            if logging:
+                print(f'  ROSTER REQUEST FAILED for {username[:30]}')
             continue
+        
+        n += 1
+        if logging:
+            print(f'  Fetched roster for {username[:30]}')
 
         for id, data in roster.items():  # iterate through roster JSON
             if id not in accepted_ops:
@@ -157,4 +168,6 @@ def count(
                 if val:
                     output[id][key] += 1
 
+    if logging:
+        print(f'Parsed {n} rosters')
     return output
