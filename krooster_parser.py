@@ -95,17 +95,17 @@ def parse_data(op_data: dict) -> dict:
             output[f"S{skill_num}M3"] = True
 
     # check for impossible masteries/promotions
-    if op_data.get("id") == "char_002_amiya":  # skip check for caster amiya
-        return output
+    if op_data.get("id") != "char_002_amiya":  # skip checks for caster amiya
+        rarity = op_data.get("rarity")
 
-    rarity = op_data.get("rarity")
-    if rarity < 6:  # S3 doesn't exist
-        output["S3M3"] = False
-    if rarity < 4:  # E2 and S2 don't exist
-        output["E2"] = False
-        output["S2M3"] = False
-    if rarity < 3:  # E1 doesn't exist
-        output["E1"] = False
+        if rarity < 6:  # S3 doesn't exist
+            output["S3M3"] = False
+        if rarity < 4:  # E2 and masteries don't exist
+            output["E2"] = False
+            output["S2M3"] = False
+            output["S1M3"] = False
+        if rarity < 3:  # E1 doesn't exist
+            output["E1"] = False
 
     return output
 
