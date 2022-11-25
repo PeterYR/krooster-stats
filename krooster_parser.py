@@ -101,11 +101,10 @@ def parse_data(op_data: dict) -> dict:
     rarity = op_data.get("rarity")
     if rarity < 6:  # S3 doesn't exist
         output["S3M3"] = False
-    if rarity < 4:  # S2 doesn't exist
-        output["S2M3"] = False
-    if rarity < 3:  # E2 doesn't exist
+    if rarity < 4:  # E2 and S2 don't exist
         output["E2"] = False
-    if rarity < 2:  # E1 doesn't exist
+        output["S2M3"] = False
+    if rarity < 3:  # E1 doesn't exist
         output["E1"] = False
 
     return output
@@ -167,7 +166,7 @@ def count(
         if not roster:
             # roster is empty, or `get_roster` failed
             if logging:
-                print(f"  ROSTER REQUEST FAILED for {username[:30]}")
+                print(f"! ROSTER REQUEST FAILED for {username[:30]}")
             continue
 
         n += 1
