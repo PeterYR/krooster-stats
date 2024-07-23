@@ -1,5 +1,5 @@
 import requests
-from functools import cache
+from functools import lru_cache
 
 EN_ONLY = True
 
@@ -39,7 +39,7 @@ for id, data in operators_json.items():
     }
 
 
-@cache
+@lru_cache
 def get_roster(username: str) -> dict:
     """Make HTTP requests and return Krooster roster JSON"""
 
@@ -135,7 +135,7 @@ def force_mastery_schema(mastery) -> dict[int, int]:
 
 # TODO: logging option?
 def count(
-    usernames: list[str], accepted_ops: set[str] = None, logging=False
+    usernames: list[str], accepted_ops: set[str] = set(), logging=False
 ) -> dict[str, dict[str, int]]:
     """Counts fields for all users' Kroosters.\n
     `{ operator_id: { field: count } }`
@@ -144,7 +144,7 @@ def count(
     - `logging`: print intermediate statuses if enabled"""
 
     # use all ops if accepted_ops not given
-    if accepted_ops is None:
+    if not accepted_ops:
         accepted_ops = set(common_op_info.keys())
 
     output: dict[str, dict[str, int]] = {}
@@ -157,11 +157,7 @@ def count(
 
     n = 0
     for username in usernames:
-        # try:
         roster = get_roster(username)
-        # except ValueError:
-        #     print(f"fail on {username}")
-        #     continue
 
         if not roster:
             # roster is empty, or `get_roster` failed

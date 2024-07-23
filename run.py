@@ -46,30 +46,16 @@ def main(argv):
     # create output folder if needed
     Path("./output").mkdir(exist_ok=True)
 
-    # rarity/community specific stats
-    for subset_name, user_list in user_lists.items():  # for each rarity/community pair
+    # rarity-specific stats
+    for rarity, user_list in user_lists.items():
         if not user_list:  # list is empty
             continue
 
-        rarity = int(subset_name[0])
         valid_ops = op_rarities.get(rarity)
 
         results = kp.count(user_list, accepted_ops=valid_ops)
 
-        out_path = f"output/{subset_name}.csv"
-        write_to_csv(results, out_path)
-        print(f"Wrote to {out_path}")
-
-    # find overall stats (all communities) for each rarity
-    for rarity in range(1, 7):
-        df_tmp = df[df["rarities"].apply(lambda l: rarity in l)]
-        user_list = list(df_tmp["username"])
-
-        valid_ops = op_rarities.get(rarity)
-
-        results = kp.count(user_list, accepted_ops=valid_ops)
-
-        out_path = f"output/ALL_{rarity}.csv"
+        out_path = f"output/{rarity}.csv"
         write_to_csv(results, out_path)
         print(f"Wrote to {out_path}")
 
