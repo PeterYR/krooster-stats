@@ -15,9 +15,9 @@ COUNTED_FIELDS = [
     "S1M3",
     "S2M3",
     "S3M3",
-    "mod-X",
-    "mod-Y",
-    "mod-D",
+    "mod-X3",
+    "mod-Y3",
+    "mod-D3",
     "pot-6",
 ]
 
@@ -30,6 +30,13 @@ MAX_ELITES_AND_LEVELS = {
     6: (2, 90),
 }
 
+# modules unlock at E2, with levels depending on rarity
+MODULE_UNLOCKS = {
+    4: 40,
+    5: 50,
+    6: 60,
+}
+
 # load general operator data from operators.json
 operators_json: dict[str, dict] = requests.get(OPERATORS_JSON_URL).json()
 common_op_info = {}
@@ -37,9 +44,20 @@ for id, data in operators_json.items():
     if EN_ONLY and data.get("isCnOnly"):  # skip CN-only ops if flag set
         continue
 
+    # find module order
+    mod_order = []
+    for module in data["modules"]:
+        mod_letter = module["typeName"][-1:]
+
+        assert len(module["stages"]) == 3
+        assert mod_letter in {"X", "Y", "D"}
+
+        mod_order.append(mod_letter)
+
     common_op_info[id] = {
         "name": data["name"],
         "rarity": data["rarity"],
+        "mod_order": mod_order,
     }
 
 
@@ -98,8 +116,16 @@ def parse_data(op_data: dict) -> dict:
     mastery = force_mastery_schema(op_data.get("mastery", {}))
     for skill_num in range(1, 4):
         # if op_data.get(f"skill{skill_num}Mastery") == 3:
-        if mastery.get(skill_num) == 3:
+        if mastery.get(skill_num, -1) == 3:
             output[f"S{skill_num}M3"] = True
+
+    # set mod3 bools
+    if (
+        op_data["rarity"] >= 4
+        and op_data["promotion"] >= 2
+        and op_data["level"] >= MODULE_UNLOCKS[op_data["rarity"]]
+    ):  # operator has available modules and is leveled enough
+        ...
 
     # check for impossible masteries/promotions
     if op_data.get("id") != "char_002_amiya":  # skip checks for caster amiya
@@ -118,7 +144,9 @@ def parse_data(op_data: dict) -> dict:
 
 
 def force_mastery_schema(mastery: list | dict) -> dict[int, int]:
-    """Mastery schema is wack, this func makes it less wack"""
+    """Mastery schema is wack, this func makes it less wack
+    `{2: 3, 3: 3, ...}`
+    """
     output = {}
     if not mastery:
         return output
