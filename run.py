@@ -2,8 +2,8 @@ import csv
 import sys
 from pathlib import Path
 
-from . import krooster_parser as kp
-from . import scan_gform as sgf
+import krooster_parser as kp
+import scan_gform as sgf
 
 
 # set up mapping of rarities to ops
