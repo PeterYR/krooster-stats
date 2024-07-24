@@ -31,7 +31,7 @@ def generate_user_lists(df: pd.DataFrame) -> dict[int, list[str]]:
     """Generates dict of rarities to lists of users.\n
     `"{1: ['user1', 'user2' ...], ...}"`"""
 
-    output = {}
+    output: dict[int, list[str]] = {}
 
     for rarity in range(1, 7):
         df_tmp = df[df["rarities"].apply(lambda l: rarity in l)]

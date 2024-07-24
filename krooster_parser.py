@@ -15,6 +15,10 @@ COUNTED_FIELDS = [
     "S1M3",
     "S2M3",
     "S3M3",
+    "mod-X",
+    "mod-Y",
+    "mod-D",
+    "pot-6",
 ]
 
 MAX_ELITES_AND_LEVELS = {
@@ -69,6 +73,9 @@ def get_roster(username: str) -> dict:
 def parse_data(op_data: dict) -> dict:
     """Returns dict with bools for stats of interest"""
 
+    # TODO: module checks
+    # TODO: pot 6 checks
+
     output = {key: False for key in COUNTED_FIELDS}
 
     if not op_data.get("owned"):
@@ -110,7 +117,7 @@ def parse_data(op_data: dict) -> dict:
     return output
 
 
-def force_mastery_schema(mastery) -> dict[int, int]:
+def force_mastery_schema(mastery: list | dict) -> dict[int, int]:
     """Mastery schema is wack, this func makes it less wack"""
     output = {}
     if not mastery:

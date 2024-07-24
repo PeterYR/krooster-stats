@@ -2,8 +2,9 @@ import csv
 import sys
 from pathlib import Path
 
-import krooster_parser as kp
-import scan_gform as sgf
+from . import krooster_parser as kp
+from . import scan_gform as sgf
+
 
 # set up mapping of rarities to ops
 op_rarities = {r: set() for r in range(1, 7)}
