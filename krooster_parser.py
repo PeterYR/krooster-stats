@@ -117,14 +117,21 @@ def parse_data(op_data: dict) -> dict:
 
     # set mod3 bools
     if (
-        op_data["rarity"] >= 4
-        and op_data["promotion"] >= 2
-        and op_data["level"] >= MODULE_UNLOCKS[op_data["rarity"]]
-    ):  # operator has available modules and is leveled enough
-        ...
+        op_data["rarity"] >= 4  # 4-star and above
+        and op_data["promotion"] >= 2  # e2
+        and op_data["level"] >= MODULE_UNLOCKS[op_data["rarity"]]  # leveled enough
+        and "module" in op_data  # module data in roster entry
+    ):
+        mod_data = convert_mod_schema(
+            op_data["module"], common_op_info[op_data["id"]]["mod_order"]
+        )
+        for mod_letter, mod_level in mod_data.items():
+            if mod_level == 3:
+                assert f"mod-{mod_letter}3" in output
+                output[f"mod-{mod_letter}3"] = True
 
     # check for impossible masteries/promotions
-    if op_data.get("id") != "char_002_amiya":  # skip checks for caster amiya
+    if op_data["id"] != "char_002_amiya":  # skip checks for caster amiya
         rarity = op_data.get("rarity")
 
         if rarity < 6:  # S3 doesn't exist
@@ -141,6 +148,7 @@ def parse_data(op_data: dict) -> dict:
 
 def force_mastery_schema(mastery: list | dict) -> dict[int, int]:
     """Mastery schema is wack, this func makes it less wack
+
     `{2: 3, 3: 3, ...}`
     """
     output = {}
@@ -166,7 +174,10 @@ def force_mastery_schema(mastery: list | dict) -> dict[int, int]:
 
 def convert_mod_schema(mod: list[int | None], mod_order: list[str]) -> dict[str, int]:
     """Converts mod schema to dict with mod letter keys
+
     `{X: 3, Y: 3, D: 3}`
+
+    `0` if not unlocked, or doesn't exist
     """
     output = {"X": 0, "Y": 0, "D": 0}
     for idx, letter in enumerate(mod_order):
