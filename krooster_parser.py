@@ -1,7 +1,6 @@
 import requests
 from functools import lru_cache
 
-EN_ONLY = False
 
 OPERATORS_JSON_URL = (
     "https://raw.githubusercontent.com/neeia/ak-roster/main/src/data/operators.json"
@@ -41,9 +40,6 @@ MODULE_UNLOCKS = {
 operators_json: dict[str, dict] = requests.get(OPERATORS_JSON_URL).json()
 common_op_info = {}
 for id, data in operators_json.items():
-    if EN_ONLY and data.get("isCnOnly"):  # skip CN-only ops if flag set
-        continue
-
     # find module order
     mod_order = []
     for module in data["modules"]:

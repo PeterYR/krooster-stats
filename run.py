@@ -6,11 +6,14 @@ import krooster_parser as kp
 import scan_gform as sgf
 
 
+EN_ONLY = True
+
+
 # set up mapping of rarities to ops
 op_rarities = {r: set() for r in range(1, 7)}
 for op_name, data in kp.operators_json.items():
-    if kp.EN_ONLY and data.get("isCnOnly"):
-        # op is CN_only but kparser set to EN only
+    if EN_ONLY and data.get("isCnOnly"):
+        # skip CN-only operator
         continue
 
     rarity = data.get("rarity")
