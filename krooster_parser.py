@@ -1,7 +1,7 @@
 import requests
 from functools import lru_cache
 
-EN_ONLY = True
+EN_ONLY = False
 
 OPERATORS_JSON_URL = (
     "https://raw.githubusercontent.com/neeia/ak-roster/main/src/data/operators.json"
@@ -165,6 +165,22 @@ def force_mastery_schema(mastery: list | dict) -> dict[int, int]:
 
     else:
         raise ValueError("Unrecognized mastery schema")
+    return output
+
+
+def convert_mod_schema(mod: list[int | None], mod_order: list[str]) -> dict[str, int]:
+    """Converts mod schema to dict with mod letter keys
+    `{X: 3, Y: 3, D: 3}`
+    """
+    output = {"X": 0, "Y": 0, "D": 0}
+    for idx, letter in enumerate(mod_order):
+        if idx >= len(mod):  # mod data in roster too short
+            break
+        if mod[idx] is None:
+            continue
+
+        output[letter] = mod[idx]
+
     return output
 
 
