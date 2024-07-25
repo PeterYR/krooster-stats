@@ -87,9 +87,6 @@ def get_roster(username: str) -> dict:
 def parse_data(op_data: dict) -> dict:
     """Returns dict with bools for stats of interest"""
 
-    # TODO: module checks
-    # TODO: pot 6 checks
-
     output = {key: False for key in COUNTED_FIELDS}
 
     if not op_data.get("owned"):
@@ -129,6 +126,10 @@ def parse_data(op_data: dict) -> dict:
             if mod_level == 3:
                 assert f"mod-{mod_letter}3" in output
                 output[f"mod-{mod_letter}3"] = True
+
+    # set pot6 bool
+    if op_data["potential"] == 6:
+        output["pot-6"] = True
 
     # check for impossible masteries/promotions
     if op_data["id"] != "char_002_amiya":  # skip checks for caster amiya
