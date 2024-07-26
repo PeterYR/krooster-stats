@@ -38,7 +38,7 @@ MODULE_UNLOCKS = {
 
 # load general operator data from operators.json
 operators_json: dict[str, dict] = requests.get(OPERATORS_JSON_URL).json()
-common_op_info = {}
+common_op_info: dict[str, dict] = {}
 for id, data in operators_json.items():
     # find module order
     mod_order = []
@@ -58,7 +58,7 @@ for id, data in operators_json.items():
 
 
 @lru_cache
-def get_roster(username: str) -> dict:
+def get_roster(username: str) -> dict[str, dict]:
     """Make HTTP requests and return Krooster roster JSON"""
 
     if not username:
@@ -84,7 +84,7 @@ def get_roster(username: str) -> dict:
         return {}
 
 
-def parse_data(op_data: dict) -> dict:
+def parse_data(op_data: dict) -> dict[str, bool]:
     """Returns dict with bools for stats of interest"""
 
     output = {key: False for key in COUNTED_FIELDS}
@@ -192,7 +192,6 @@ def convert_mod_schema(mod: list[int | None], mod_order: list[str]) -> dict[str,
     return output
 
 
-# TODO: logging option?
 def count(
     usernames: list[str], accepted_ops: set[str] = set(), logging=False
 ) -> dict[str, dict[str, int]]:
@@ -207,8 +206,9 @@ def count(
         accepted_ops = set(common_op_info.keys())
 
     output: dict[str, dict[str, int]] = {}
-    for id in common_op_info.keys():  # initialize all fields to 0
+    for id in common_op_info.keys():
         if id in accepted_ops:
+            # initialize all fields to 0
             output[id] = {field: 0 for field in COUNTED_FIELDS}
 
     if logging:
@@ -233,8 +233,7 @@ def count(
                 continue
             parsed_bools = parse_data(data)
             for key, val in parsed_bools.items():
-                if val:
-                    output[id][key] += 1
+                output[id][key] += int(val)
 
     if logging:
         print(f"Parsed {n} rosters")
