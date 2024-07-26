@@ -1,5 +1,5 @@
+import grequests
 import requests
-from functools import lru_cache
 
 
 OPERATORS_JSON_URL = (
@@ -57,31 +57,28 @@ for id, data in operators_json.items():
     }
 
 
-@lru_cache
-def get_roster(username: str) -> dict[str, dict]:
-    """Make HTTP requests and return Krooster roster JSON"""
-
-    if not username:
-        return {}
-
-    try:
-        r = requests.get(
+def get_rosters(usernames: list[str]) -> list[dict[str, dict]]:
+    # find UUIDs
+    reqs = (
+        grequests.get(
             f"https://ak-roster-default-rtdb.firebaseio.com/phonebook/{username.lower()}.json"
         )
-        if not r:
-            return {}
+        for username in usernames
+    )
+    responses = grequests.map(reqs)
+    uuids = [r.json() for r in responses if r]
+    uuids = [uuid for uuid in uuids if uuid]  # uuid is None if bad username
 
-        uuid = r.json()
-        r2 = requests.get(
+    # get rosters from UUIDs
+    reqs = (
+        grequests.get(
             f"https://ak-roster-default-rtdb.firebaseio.com/users/{uuid}/roster.json"
         )
-        if not r2:
-            return {}
+        for uuid in uuids
+    )
+    responses = grequests.map(reqs)
 
-        return r2.json()
-
-    except Exception:
-        return {}
+    return [r.json() for r in responses if r]
 
 
 def parse_data(op_data: dict) -> dict[str, bool]:
@@ -193,7 +190,7 @@ def convert_mod_schema(mod: dict[int, int], mod_order: list[str]) -> dict[str, i
 
 
 def count(
-    usernames: list[str], accepted_ops: set[str] = set(), logging=False
+    usernames: list[str], accepted_ops: set[str] = None, logging=False
 ) -> dict[str, dict[str, int]]:
     """Counts fields for all users' Kroosters.\n
     `{ operator_id: { field: count } }`
@@ -211,30 +208,17 @@ def count(
             # initialize all fields to 0
             output[id] = {field: 0 for field in COUNTED_FIELDS}
 
+    rosters = get_rosters(usernames)
     if logging:
-        print(f"Parsing {len(usernames)} rosters...")
+        print(f"Parsing {len(rosters)} rosters of {len(usernames)} usernames...")
 
-    n = 0
-    for username in usernames:
-        roster = get_roster(username)
-
-        if not roster:
-            # roster is empty, or `get_roster` failed
-            if logging:
-                print(f"! ROSTER REQUEST FAILED for {username[:30]}")
-            continue
-
-        n += 1
-        if logging:
-            print(f"  Fetched roster for {username[:30]}")
-
+    for roster in rosters:
         for id, data in roster.items():  # iterate through roster JSON
             if id not in accepted_ops:
                 continue
+
             parsed_bools = parse_data(data)
             for key, val in parsed_bools.items():
                 output[id][key] += int(val)
 
-    if logging:
-        print(f"Parsed {n} rosters")
     return output
