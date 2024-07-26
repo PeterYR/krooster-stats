@@ -106,9 +106,8 @@ def parse_data(op_data: dict) -> dict[str, bool]:
             output["E2"] = True
 
     # set M3 bools
-    mastery = force_mastery_schema(op_data.get("mastery", {}))
+    mastery = force_mastery_mod_schema(op_data.get("mastery", {}))
     for skill_num in range(1, 4):
-        # if op_data.get(f"skill{skill_num}Mastery") == 3:
         if mastery.get(skill_num, -1) == 3:
             output[f"S{skill_num}M3"] = True
 
@@ -120,7 +119,8 @@ def parse_data(op_data: dict) -> dict[str, bool]:
         and "module" in op_data  # module data in roster entry
     ):
         mod_data = convert_mod_schema(
-            op_data["module"], common_op_info[op_data["id"]]["mod_order"]
+            force_mastery_mod_schema(op_data["module"]),
+            common_op_info[op_data["id"]]["mod_order"],
         )
         for mod_letter, mod_level in mod_data.items():
             if mod_level == 3:
@@ -147,33 +147,38 @@ def parse_data(op_data: dict) -> dict[str, bool]:
     return output
 
 
-def force_mastery_schema(mastery: list | dict) -> dict[int, int]:
-    """Mastery schema is wack, this func makes it less wack
+def force_mastery_mod_schema(data: list[int | None] | dict[str, int]) -> dict[int, int]:
+    """Mastery/mod schema is wack, this func makes it less wack
 
-    `{2: 3, 3: 3, ...}`
+    - Masteries: key is skill number
+    - Modules: key is nth module (1-indexed, order matches game data)
+
+    `[None, 3] -> {2: 3}`
+
+    `{'0': 1, '1': 2} -> {1: 1, 2: 2}`
     """
     output = {}
-    if not mastery:
+    if not data:
         return output
 
-    if type(mastery) is list:
-        for i, m in enumerate(mastery):
+    if type(data) is list:
+        for i, m in enumerate(data):
             if m:  # list entry is neither None nor 0
                 output[i + 1] = m
 
         return output
 
-    elif type(mastery) is dict:
+    elif type(data) is dict:
         for i in range(1, 4):
-            if str(i - 1) in mastery:
-                output[i] = mastery.get(str(i - 1), 0)
+            if str(i - 1) in data:
+                output[i] = data.get(str(i - 1), 0)
 
     else:
         raise ValueError("Unrecognized mastery schema")
     return output
 
 
-def convert_mod_schema(mod: list[int | None], mod_order: list[str]) -> dict[str, int]:
+def convert_mod_schema(mod: dict[int, int], mod_order: list[str]) -> dict[str, int]:
     """Converts mod schema to dict with mod letter keys
 
     `{X: 3, Y: 3, D: 3}`
@@ -182,12 +187,7 @@ def convert_mod_schema(mod: list[int | None], mod_order: list[str]) -> dict[str,
     """
     output = {"X": 0, "Y": 0, "D": 0}
     for idx, letter in enumerate(mod_order):
-        if idx >= len(mod):  # mod data in roster too short
-            break
-        if mod[idx] is None:
-            continue
-
-        output[letter] = mod[idx]
+        output[letter] = mod.get(idx + 1, 0)
 
     return output
 
