@@ -12,6 +12,7 @@ def get_df(filename: str) -> pd.DataFrame:
 
     df = pd.read_csv(filename)
     df.rename(columns=COLUMNS, inplace=True)
+    df = df[COLUMNS.values()]  # only keep relevant columns
 
     # clean up usernames
     # NOTE: Krooster usernames are limited to 24 characters
