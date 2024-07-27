@@ -20,7 +20,7 @@ for op_name, data in kp.operators_json.items():
     op_rarities[rarity].add(op_name)
 
 
-def write_to_csv(counts: dict[str, dict[str, int]], filename: str):
+def write_to_csv(counts: dict[str, dict[str, int]], filename: str, n_users=-1):
     """Write results to given filename"""
 
     # add operator ID and name to each row
@@ -28,11 +28,12 @@ def write_to_csv(counts: dict[str, dict[str, int]], filename: str):
     for op_id, counts_dict in counts.items():
         csv_row = counts_dict
         csv_row["operator_id"] = op_id
-        csv_row["operator_name"] = kp.operators_json.get(op_id).get("name")
+        csv_row["operator_name"] = kp.operators_json[op_id]["name"]
+        csv_row["n_users"] = n_users
         results.append(csv_row)
 
     # write to CSV
-    columns = ["operator_name"] + kp.COUNTED_FIELDS + ["operator_id"]
+    columns = ["n_users", "operator_name"] + kp.COUNTED_FIELDS + ["operator_id"]
     with open(filename, "w", newline="", encoding="utf-8") as fp:
         writer = csv.DictWriter(fp, fieldnames=columns)
         writer.writeheader()
@@ -57,10 +58,11 @@ def main(argv):
 
         valid_ops = op_rarities.get(rarity, set())
 
-        results = kp.count(user_list, accepted_ops=valid_ops)
+        rosters = kp.get_rosters(user_list)
+        results = kp.count(rosters, accepted_ops=valid_ops)
 
         out_path = f"output/{rarity}.csv"
-        write_to_csv(results, out_path)
+        write_to_csv(results, out_path, n_users=len(rosters))
         print(f"Wrote to {out_path}")
 
 

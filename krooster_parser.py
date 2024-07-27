@@ -210,7 +210,7 @@ def convert_mod_schema(mod: dict[int, int], mod_order: list[str]) -> dict[str, i
 
 
 def count(
-    usernames: list[str], accepted_ops: set[str] = None, logging=False
+    rosters: list[dict[str, dict]], accepted_ops: set[str] = None, logging=False
 ) -> dict[str, dict[str, int]]:
     """Counts fields for all users' Kroosters.\n
     `{ operator_id: { field: count } }`
@@ -228,9 +228,9 @@ def count(
             # initialize all fields to 0
             output[id] = {field: 0 for field in COUNTED_FIELDS}
 
-    rosters = get_rosters(usernames)
+    # rosters = get_rosters(usernames)
     if logging:
-        print(f"Parsing {len(rosters)} rosters of {len(usernames)} usernames...")
+        print(f"Parsing {len(rosters)} rosters...")
 
     for roster in rosters:
         for id, data in roster.items():  # iterate through roster JSON
