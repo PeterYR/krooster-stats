@@ -55,7 +55,7 @@ def main(argv):
         if not user_list:  # list is empty
             continue
 
-        valid_ops = op_rarities.get(rarity)
+        valid_ops = op_rarities.get(rarity, set())
 
         results = kp.count(user_list, accepted_ops=valid_ops)
 

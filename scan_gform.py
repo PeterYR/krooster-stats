@@ -1,4 +1,3 @@
-import csv
 import pandas as pd
 
 
@@ -14,15 +13,15 @@ def get_df(filename: str) -> pd.DataFrame:
     df = pd.read_csv(filename)
     df.rename(columns=COLUMNS, inplace=True)
 
+    # clean up usernames
+    # NOTE: Krooster usernames are limited to 24 characters
+    df["username"] = df["username"].str.lower().str.strip().str.slice(0, 50)
+
     # remove blank names
     df.dropna(subset="username", inplace=True)
+
     # for dupe names, only use latest submission
     df.drop_duplicates(subset="username", keep="last", inplace=True)
-
-    # separate rarity strings into lists
-    df["rarities"] = (
-        df["rarities"].str.split(",").apply(lambda l: [int(x.strip(" ★")) for x in l])
-    )
 
     return df
 
@@ -34,7 +33,7 @@ def generate_user_lists(df: pd.DataFrame) -> dict[int, list[str]]:
     output: dict[int, list[str]] = {}
 
     for rarity in range(1, 7):
-        df_tmp = df[df["rarities"].apply(lambda l: rarity in l)]
+        df_tmp = df[df["rarities"].apply(lambda l: str(rarity) in l)]
         output[rarity] = list(df_tmp["username"])
 
     return output
