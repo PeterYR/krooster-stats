@@ -14,6 +14,7 @@ COUNTED_FIELDS = [
     "S1M3",
     "S2M3",
     "S3M3",
+    "all-M3",
     "mod-X3",
     "mod-Y3",
     "mod-D3",
@@ -107,6 +108,15 @@ def parse_data(op_data: dict) -> dict[str, bool]:
     for skill_num in range(1, 4):
         if mastery.get(skill_num, -1) == 3:
             output[f"S{skill_num}M3"] = True
+
+    # set M6/M9 bool
+    if (
+        op_data["rarity"] >= 4
+        and output["S1M3"]
+        and output["S2M3"]
+        and (output["S3M3"] or op_data["rarity"] < 6)
+    ):
+        output["all-M3"] = True
 
     # set mod3 bools
     if (
