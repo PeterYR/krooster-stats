@@ -66,9 +66,19 @@ def get_rosters(usernames: list[str]) -> list[dict[str, dict]]:
         )
         for username in usernames
     )
-    responses = grequests.map(reqs)
-    uuids = [r.json() for r in responses if r]
-    uuids = [uuid for uuid in uuids if uuid]  # uuid is None if bad username
+    responses: list[requests.Response] = grequests.map(reqs)
+
+    uuids = []
+    for r in responses:
+        # https://stackoverflow.com/a/69312334
+        if r and r.headers.get("Content-Type", "").startswith("application/json"):
+            try:
+                uuid = r.json()
+            except requests.exceptions.JSONDecodeError:
+                continue
+
+            if uuid:  # uuid is null/None if bad username
+                uuids.append(uuid)
 
     # get rosters from UUIDs
     reqs = (
