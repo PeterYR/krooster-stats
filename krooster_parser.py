@@ -160,6 +160,11 @@ def parse_data(op_data: dict) -> dict[str, bool]:
             output["S1M3"] = False
         if rarity < 3:  # E1 doesn't exist
             output["E1"] = False
+    if op_data.get("skillLevel", 0) < 7:  # skill level too low for masteries
+        output["S1M3"] = False
+        output["S2M3"] = False
+        output["S3M3"] = False
+        output["all-M3"] = False
 
     return output
 
