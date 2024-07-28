@@ -4,6 +4,7 @@ from pathlib import Path
 
 import krooster_parser as kp
 import scan_gform as sgf
+import exist_flags as ef
 
 
 EN_ONLY = True
@@ -63,6 +64,18 @@ def main(argv):
 
         out_path = f"output/{rarity}.csv"
         write_to_csv(results, out_path, n_users=len(rosters))
+        print(f"Wrote to {out_path}")
+
+    # existence flags
+    for rarity in range(1, 7):
+        flags = ef.generate_all_flags(
+            kp.operators_json,
+            rarities={rarity},
+            include_cn=not EN_ONLY,
+        )
+
+        out_path = f"output/{rarity}_flags.csv"
+        ef.write_to_csv(flags, out_path)
         print(f"Wrote to {out_path}")
 
 
