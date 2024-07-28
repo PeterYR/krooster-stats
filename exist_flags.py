@@ -54,6 +54,7 @@ def generate_all_flags(
             continue
 
         output[op_id] = generate_flags(data, include_cn=include_cn)
+        output[op_id]["rarity"] = data["rarity"]
 
     return output
 
@@ -61,7 +62,7 @@ def generate_all_flags(
 def write_to_csv(flags: dict[str, dict[str, bool]], filename: str):
     """Write flags to CSV file"""
 
-    columns = ["operator_id"] + FIELDS
+    columns = ["operator_id", "rarity"] + FIELDS
     rows = []
     for op_id, flag_dict in flags.items():
         row = flag_dict
