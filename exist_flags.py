@@ -1,16 +1,25 @@
+import csv
+
+
 OPERATORS_JSON_URL = (
     "https://raw.githubusercontent.com/neeia/ak-roster/main/src/data/operators.json"
 )
 
 
-def generate_flags(op_data: dict, include_cn=False) -> dict[str, bool]:
-    output = {
-        "available": True,
-        "mod-X": False,
-        "mod-Y": False,
-        "mod-D": False,
-    }
+FIELDS = [
+    "available",
+    "mod-X",
+    "mod-Y",
+    "mod-D",
+]
 
+
+def generate_flags(op_data: dict, include_cn=False) -> dict[str, bool]:
+    """Generate inclusion flags for a single operator based on given params."""
+
+    output = {f: False for f in FIELDS}
+
+    output["available"] = True
     if not include_cn and op_data["isCnOnly"]:
         # not available in EN
         output["available"] = False
@@ -47,3 +56,19 @@ def generate_all_flags(
         output[op_id] = generate_flags(data, include_cn=include_cn)
 
     return output
+
+
+def write_to_csv(flags: dict[str, dict[str, bool]], filename: str):
+    """Write flags to CSV file"""
+
+    columns = ["operator_id"] + FIELDS
+    rows = []
+    for op_id, flag_dict in flags.items():
+        row = flag_dict
+        row["operator_id"] = op_id
+        rows.append(row)
+
+    with open(filename, "w", newline="", encoding="utf-8") as fp:
+        writer = csv.DictWriter(fp, fieldnames=columns)
+        writer.writeheader()
+        writer.writerows(rows)
