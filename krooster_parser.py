@@ -2,6 +2,9 @@ import grequests
 import requests
 
 
+CHUNK_SIZE = 500
+
+
 OPERATORS_JSON_URL = (
     "https://raw.githubusercontent.com/neeia/ak-roster/main/src/data/operators.json"
 )
@@ -58,38 +61,64 @@ for id, data in operators_json.items():
     }
 
 
-def get_rosters(usernames: list[str]) -> list[dict[str, dict]]:
+def split_list(ls: list, size: int):
+    """Split list into chunks of size `size`"""
+    return (ls[i : i + size] for i in range(0, len(ls), size))
+
+
+def get_rosters(usernames: list[str], logging=False) -> list[dict[str, dict]]:
     # find UUIDs
-    reqs = (
-        grequests.get(
-            f"https://ak-roster-default-rtdb.firebaseio.com/phonebook/{username.lower()}.json"
+    uuids: list[str] = []
+
+    for chunk in split_list(usernames, CHUNK_SIZE):
+        reqs = (
+            grequests.get(
+                f"https://ak-roster-default-rtdb.firebaseio.com/phonebook/{username.lower()}.json"
+            )
+            for username in chunk
         )
-        for username in usernames
-    )
-    responses: list[requests.Response] = grequests.map(reqs)
+        responses: list[requests.Request] = grequests.map(reqs)
 
-    uuids = []
-    for r in responses:
-        # https://stackoverflow.com/a/69312334
-        if r and r.headers.get("Content-Type", "").startswith("application/json"):
-            try:
-                uuid = r.json()
-            except requests.exceptions.JSONDecodeError:
-                continue
+        for r in responses:
+            # https://stackoverflow.com/a/69312334
+            if r and r.headers.get("Content-Type", "").startswith("application/json"):
+                try:
+                    roster = r.json()
+                except requests.exceptions.JSONDecodeError:
+                    continue
 
-            if uuid:  # uuid is null/None if bad username
-                uuids.append(uuid)
+                if roster:  # uuid is null/None if bad username
+                    uuids.append(roster)
+
+        if logging:
+            print(f"Found {len(uuids)} UUIDs...")
 
     # get rosters from UUIDs
-    reqs = (
-        grequests.get(
-            f"https://ak-roster-default-rtdb.firebaseio.com/users/{uuid}/roster.json"
+    rosters: list[dict[str, dict]] = []
+    for chunk in split_list(uuids, CHUNK_SIZE):
+        reqs = (
+            grequests.get(
+                f"https://ak-roster-default-rtdb.firebaseio.com/users/{uuid}/roster.json"
+            )
+            for uuid in chunk
         )
-        for uuid in uuids
-    )
-    responses = grequests.map(reqs)
+        responses: list[requests.Request] = grequests.map(reqs)
 
-    return [r.json() for r in responses if r]
+        for r in responses:
+            # https://stackoverflow.com/a/69312334
+            if r and r.headers.get("Content-Type", "").startswith("application/json"):
+                try:
+                    roster = r.json()
+                except requests.exceptions.JSONDecodeError:
+                    continue
+
+                if roster:  # uuid is null/None if bad username
+                    rosters.append(roster)
+
+        if logging:
+            print(f"Found {len(rosters)} rosters...")
+
+    return rosters
 
 
 def parse_data(op_data: dict) -> dict[str, bool]:
