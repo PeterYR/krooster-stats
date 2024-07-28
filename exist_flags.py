@@ -1,12 +1,9 @@
-import krooster_parser as kp
-
-
 OPERATORS_JSON_URL = (
     "https://raw.githubusercontent.com/neeia/ak-roster/main/src/data/operators.json"
 )
 
 
-def generate_flags(op_data: dict, include_cn=False):
+def generate_flags(op_data: dict, include_cn=False) -> dict[str, bool]:
     output = {
         "available": True,
         "mod-X": False,
@@ -35,7 +32,7 @@ def generate_all_flags(
     operators_json: dict[str, dict],
     rarities: set = None,
     include_cn=False,
-):
+) -> dict[str, dict[str, bool]]:
     """Generate inclusion flags for operators based on given params.
 
     - `rarities`: operators will be excluded if bad rarity, include all rarities if not given
