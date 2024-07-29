@@ -67,16 +67,10 @@ def main(argv):
         print(f"Wrote to {out_path}")
 
     # existence flags
-    for rarity in range(1, 7):
-        flags = ef.generate_all_flags(
-            kp.operators_json,
-            rarities={rarity},
-            include_cn=not EN_ONLY,
-        )
-
-        out_path = f"output/{rarity}_flags.csv"
-        ef.write_to_csv(flags, out_path)
-        print(f"Wrote to {out_path}")
+    flags = ef.generate_all_flags(kp.operators_json, include_cn=not EN_ONLY)
+    out_path = "output/flags.csv"
+    ef.write_to_csv(flags, out_path)
+    print(f"Wrote to {out_path}")
 
 
 if __name__ == "__main__":
