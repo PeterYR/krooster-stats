@@ -37,4 +37,13 @@ def generate_user_lists(df: pd.DataFrame) -> dict[int, list[str]]:
         df_tmp = df[df["rarities"].apply(lambda l: str(rarity) in l)]
         output[rarity] = list(df_tmp["username"])
 
+        # detect URLs and extract usernames
+        for i, username in enumerate(output[rarity]):
+            if "/" in username:
+                parts = username.split("/")
+                if parts[-1]:
+                    output[rarity][i] = parts[-1]
+                else:
+                    output[rarity][i] = parts[-2]  # `/` is last char
+
     return output
