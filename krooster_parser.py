@@ -47,6 +47,10 @@ for id, data in operators_json.items():
     # find module order
     mod_order = []
     for module in data["modules"]:
+        if module["typeName"] == "ISW-A":  # skip IS modules for now
+            # TODO: handle IS modules
+            continue
+
         mod_letter = module["typeName"][-1:]
 
         assert len(module["stages"]) == 3
