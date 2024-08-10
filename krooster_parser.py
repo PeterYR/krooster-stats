@@ -101,7 +101,11 @@ def get_uuids(usernames: list[str], logging=False) -> dict[str, str | None]:
 
         assert len(chunk) == len(uuids_chunk)
         for username, uuid in zip(chunk, uuids_chunk):
-            output[username] = uuid
+            if uuid:
+                output[username] = uuid
+
+        if logging:
+            print(f"Found {len(output)} UUIDs...")
 
     return output
 
