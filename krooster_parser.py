@@ -74,8 +74,8 @@ def split_list(ls: list, size: int):
     return (ls[i : i + size] for i in range(0, len(ls), size))
 
 
-def get_uuids(usernames: list[str], logging=False) -> dict[str, str | None]:
-    """Returns dict of usernames to UUIDs (`None` if invalid)"""
+def get_uuids(usernames: list[str], logging=False) -> dict[str, str]:
+    """Returns dict of usernames to UUIDs"""
     output: dict[str, str] = {}
 
     for chunk in split_list(usernames, CHUNK_SIZE):
@@ -110,7 +110,43 @@ def get_uuids(usernames: list[str], logging=False) -> dict[str, str | None]:
     return output
 
 
-def get_rosters(usernames: list[str], logging=False) -> list[Roster]:
+def get_rosters(uuids: list[str], logging=False) -> dict[str, Roster]:
+    """Returns dict of UUIDs to rosters"""
+    output: dict[str, Roster] = {}
+
+    for chunk in split_list(uuids, CHUNK_SIZE):
+        reqs = (
+            grequests.get(
+                f"https://ak-roster-default-rtdb.firebaseio.com/users/{uuid}/roster.json"
+            )
+            for uuid in chunk
+        )
+        responses: list[requests.Response] = grequests.map(reqs)
+
+        rosters_chunk: list[Roster] = []
+        for r in responses:
+            roster = None
+            # https://stackoverflow.com/a/69312334
+            if r and r.headers.get("Content-Type", "").startswith("application/json"):
+                try:
+                    roster = r.json()
+                except requests.exceptions.JSONDecodeError:
+                    pass
+
+            rosters_chunk.append(roster)
+
+        assert len(chunk) == len(rosters_chunk)
+        for uuid, roster in zip(chunk, rosters_chunk):
+            if roster:
+                output[uuid] = roster
+
+        if logging:
+            print(f"Found {len(output)} rosters...")
+
+    return output
+
+
+def get_rosters_deprecate(usernames: list[str], logging=False) -> list[Roster]:
     # find UUIDs
     uuids: list[str] = []
 
