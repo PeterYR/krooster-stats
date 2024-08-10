@@ -33,6 +33,9 @@ def write_to_csv(counts: dict[str, dict[str, int]], filename: str, n_users=-1):
         csv_row["n_users"] = n_users
         results.append(csv_row)
 
+    # sort rows
+    results.sort(key=lambda x: x["operator_name"])
+
     # write to CSV
     columns = ["n_users", "operator_name"] + kp.COUNTED_FIELDS + ["operator_id"]
     with open(filename, "w", newline="", encoding="utf-8") as fp:
@@ -59,8 +62,8 @@ def main(argv):
 
         valid_ops = op_rarities.get(rarity, set())
 
-        rosters = kp.get_rosters(user_list)
-        results = kp.count(rosters, accepted_ops=valid_ops)
+        rosters = kp.get_rosters(user_list, logging=True)
+        results = kp.count(rosters, accepted_ops=valid_ops, logging=True)
 
         out_path = f"output/{rarity}.csv"
         write_to_csv(results, out_path, n_users=len(rosters))
