@@ -1,5 +1,6 @@
 import grequests
 import requests
+from typing import Any
 
 
 CHUNK_SIZE = 500
@@ -40,6 +41,9 @@ MODULE_UNLOCKS = {
     6: 60,
 }
 
+type Roster = dict[str, dict[str, Any]]
+"""operator ID -> data"""
+
 # load general operator data from operators.json
 operators_json: dict[str, dict] = requests.get(OPERATORS_JSON_URL).json()
 common_op_info: dict[str, dict] = {}
@@ -70,7 +74,39 @@ def split_list(ls: list, size: int):
     return (ls[i : i + size] for i in range(0, len(ls), size))
 
 
-def get_rosters(usernames: list[str], logging=False) -> list[dict[str, dict]]:
+def get_uuids(usernames: list[str], logging=False) -> dict[str, str | None]:
+    """Returns dict of usernames to UUIDs (`None` if invalid)"""
+    output: dict[str, str] = {}
+
+    for chunk in split_list(usernames, CHUNK_SIZE):
+        reqs = (
+            grequests.get(
+                f"https://ak-roster-default-rtdb.firebaseio.com/phonebook/{username.lower()}.json"
+            )
+            for username in chunk
+        )
+        responses: list[requests.Response] = grequests.map(reqs)
+
+        uuids_chunk: list[str | None] = []
+        for r in responses:
+            uuid = None
+            # https://stackoverflow.com/a/69312334
+            if r and r.headers.get("Content-Type", "").startswith("application/json"):
+                try:
+                    uuid = r.json()
+                except requests.exceptions.JSONDecodeError:
+                    pass
+
+            uuids_chunk.append(uuid)
+
+        assert len(chunk) == len(uuids_chunk)
+        for username, uuid in zip(chunk, uuids_chunk):
+            output[username] = uuid
+
+    return output
+
+
+def get_rosters(usernames: list[str], logging=False) -> list[Roster]:
     # find UUIDs
     uuids: list[str] = []
 
@@ -81,7 +117,7 @@ def get_rosters(usernames: list[str], logging=False) -> list[dict[str, dict]]:
             )
             for username in chunk
         )
-        responses: list[requests.Request] = grequests.map(reqs)
+        responses: list[requests.Response] = grequests.map(reqs)
 
         for r in responses:
             # https://stackoverflow.com/a/69312334
