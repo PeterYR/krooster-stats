@@ -53,7 +53,8 @@ def main(argv):
     user_lists = sgf.generate_user_lists(df)
 
     usernames = {name for sublist in user_lists.values() for name in sublist}
-    uuid_map = kp.get_uuids(list(usernames))
+    uuid_map = kp.get_uuids(list(usernames), logging=True)
+    roster_map = kp.get_rosters(list(uuid_map.values()), logging=True)
 
     # create output folder if needed
     Path("./output").mkdir(exist_ok=True)
@@ -65,7 +66,13 @@ def main(argv):
 
         valid_ops = op_rarities.get(rarity, set())
 
-        rosters = kp.get_rosters_deprecate(user_list, logging=True)
+        rosters: list[kp.Roster] = []
+        for user in user_list:
+            uuid = uuid_map.get(user)
+            roster = roster_map.get(uuid)
+            if roster:
+                rosters.append(roster)
+
         results = kp.count(rosters, accepted_ops=valid_ops, logging=True)
 
         out_path = f"output/{rarity}.csv"

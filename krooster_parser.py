@@ -152,61 +152,6 @@ def get_rosters(uuids: list[str], logging=False) -> dict[str, Roster]:
     return output
 
 
-def get_rosters_deprecate(usernames: list[str], logging=False) -> list[Roster]:
-    # find UUIDs
-    uuids: list[str] = []
-
-    for chunk in split_list(usernames, CHUNK_SIZE):
-        reqs = (
-            grequests.get(
-                f"https://ak-roster-default-rtdb.firebaseio.com/phonebook/{username.lower()}.json"
-            )
-            for username in chunk
-        )
-        responses: list[requests.Response] = grequests.map(reqs)
-
-        for r in responses:
-            # https://stackoverflow.com/a/69312334
-            if r and r.headers.get("Content-Type", "").startswith("application/json"):
-                try:
-                    roster = r.json()
-                except requests.exceptions.JSONDecodeError:
-                    continue
-
-                if roster:  # uuid is null/None if bad username
-                    uuids.append(roster)
-
-        if logging:
-            print(f"Found {len(uuids)} UUIDs...")
-
-    # get rosters from UUIDs
-    rosters: list[dict[str, dict]] = []
-    for chunk in split_list(uuids, CHUNK_SIZE):
-        reqs = (
-            grequests.get(
-                f"https://ak-roster-default-rtdb.firebaseio.com/users/{uuid}/roster.json"
-            )
-            for uuid in chunk
-        )
-        responses: list[requests.Request] = grequests.map(reqs)
-
-        for r in responses:
-            # https://stackoverflow.com/a/69312334
-            if r and r.headers.get("Content-Type", "").startswith("application/json"):
-                try:
-                    roster = r.json()
-                except requests.exceptions.JSONDecodeError:
-                    continue
-
-                if roster:  # uuid is null/None if bad username
-                    rosters.append(roster)
-
-        if logging:
-            print(f"Found {len(rosters)} rosters...")
-
-    return rosters
-
-
 def parse_data(op_data: dict) -> dict[str, bool]:
     """Returns dict with bools for stats of interest"""
 
