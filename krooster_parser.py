@@ -103,6 +103,9 @@ def get_uuids(usernames: list[str], logging=False) -> dict[str, str]:
         for username, uuid in zip(chunk, uuids_chunk):
             if uuid:
                 output[username] = uuid
+            else:
+                if logging:
+                    print(f"  Bad username: {username}")
 
         if logging:
             print(f"Found {len(output)} UUIDs...")
@@ -139,6 +142,9 @@ def get_rosters(uuids: list[str], logging=False) -> dict[str, Roster]:
         for uuid, roster in zip(chunk, rosters_chunk):
             if roster:
                 output[uuid] = roster
+            else:
+                if logging:
+                    print(f"  No roster for UUID: {uuid}")
 
         if logging:
             print(f"Found {len(output)} rosters...")
