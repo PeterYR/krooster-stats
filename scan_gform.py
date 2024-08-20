@@ -4,6 +4,7 @@ import pandas as pd
 COLUMNS = {
     "What is your Krooster username?": "username",
     "What rarities have you entered data for?": "rarities",
+    "How did you hear about this survey?": "source",
 }
 
 
@@ -21,6 +22,8 @@ def get_df(filename: str) -> pd.DataFrame:
     # remove blank names
     df.dropna(subset="username", inplace=True)
 
+    df["username"] = df["username"].apply(parse_url)
+
     # for dupe names, only use latest submission
     df.drop_duplicates(subset="username", keep="last", inplace=True)
 
@@ -37,14 +40,20 @@ def generate_user_lists(df: pd.DataFrame) -> dict[int, list[str]]:
         df_tmp = df[df["rarities"].apply(lambda l: str(rarity) in l)]
         output[rarity] = list(df_tmp["username"])
 
-        # detect URLs and extract usernames
-        for i, username in enumerate(output[rarity]):
-            if "/" in username:
-                parts = username.split("/")
-                if parts[-1]:
-                    output[rarity][i] = parts[-1]
-                else:
-                    output[rarity][i] = parts[-2]  # `/` is last char
-                print(f"Detected URL: {username} -> {output[rarity][i]}")
+    return output
+
+
+def parse_url(url: str) -> str:
+    """Extracts username from Krooster URL."""
+
+    output = url
+
+    if "/" in url:
+        parts = url.split("/")
+        if parts[-1]:
+            output = parts[-1]
+        else:
+            output = parts[-2]  # `/` is last char
+        print(f"Detected URL: {url} -> {output}")
 
     return output
