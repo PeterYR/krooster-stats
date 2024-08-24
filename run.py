@@ -92,18 +92,38 @@ def main(argv):
 
     # overall stats
     valid_usernames = {n for n in usernames if roster_map.get(uuid_map.get(n))}
+    # only get rows of valid users
     rows = [row for _, row in df.iterrows() if row["username"] in valid_usernames]
 
-    source_counts = {}
+    source_counts: dict[str, int] = {}
     for row in rows:
         source = row["source"]
         source_counts[source] = source_counts.get(source, 0) + 1
 
-    print("\n### OVERALL STATS ###")
-    print("Source counts:")
-    print(f'  Discord: {source_counts.get("Discord", 0) / len(rows) * 100:.2f}%')
-    print(f'  Reddit: {source_counts.get("Reddit", 0) / len(rows) * 100:.2f}%')
-    print(f'  YouTube: {source_counts.get("YouTube", 0 ) / len(rows) * 100:.2f}%')
+    n_discord = source_counts.get("Discord", 0)
+    n_reddit = source_counts.get("Reddit", 0)
+    n_youtube = source_counts.get("YouTube", 0)
+
+    rarity_counts = {r: 0 for r in range(1, 7)}
+    for row in rows:
+        for rarity in range(1, 7):
+            if str(rarity) in row["rarities"]:
+                rarity_counts[rarity] += 1
+
+    out_path = "output/stats.txt"
+    with open(out_path, "w", encoding="utf-8") as fp:
+        print(f"Total valid rosters: {len(rows)}", file=fp)
+        print("", file=fp)
+        print("Source counts:", file=fp)
+        print(f"  Discord: {n_discord} ({n_discord / len(rows) * 100:.2f}%)", file=fp)
+        print(f"  Reddit: {n_reddit} ({n_reddit / len(rows) * 100:.2f}%)", file=fp)
+        print(f"  YouTube: {n_youtube} ({n_youtube / len(rows) * 100:.2f}%)", file=fp)
+        print("", file=fp)
+        print("Responses by rarity:", file=fp)
+        for rarity in range(6, 0, -1):
+            n = rarity_counts[rarity]
+            print(f"  {rarity}★: {n} ({n / len(rows) * 100:.2f}%)", file=fp)
+    print(f"Wrote to {out_path}")
 
 
 if __name__ == "__main__":
